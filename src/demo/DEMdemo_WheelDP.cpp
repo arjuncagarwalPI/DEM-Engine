@@ -18,6 +18,7 @@
 #include <cmath>
 #include <cstdio>
 #include <filesystem>
+#include <fstream>
 #include <map>
 #include <random>
 
@@ -29,6 +30,10 @@ int main() {
     std::filesystem::path out_dir = std::filesystem::current_path();
     out_dir /= "DemoOutput_WheelDP";
     std::filesystem::create_directory(out_dir);
+    
+    // Create CSV file for data logging
+    std::ofstream data_csv(out_dir / "wheel_drawbar_pull_data.csv");
+    data_csv << "time,run_mode,force_x,force_y,force_z,drawbar_pull_coeff,max_system_velocity\n";
 
     float TRs[] = {0.05, 0.1, 0.2, 0.3, 0.5, 0.7, 0.8};
     unsigned int run_mode = 0;
@@ -281,11 +286,18 @@ int main() {
             if (curr_step % report_steps == 0) {
                 float3 forces = wheel_tracker->ContactAcc();
                 forces *= wheel_mass;
+                
+                // Print to console
                 std::cout << "Current run mode: " << run_mode << std::endl;
                 std::cout << "Time: " << t << std::endl;
                 std::cout << "Force on wheel: " << forces.x << ", " << forces.y << ", " << forces.z << std::endl;
                 std::cout << "Drawbar pull coeff: " << forces.x / (wheel_mass * G_mag) << std::endl;
                 std::cout << "Max system velocity: " << max_v_finder->GetValue() << std::endl;
+                
+                // Write to CSV file
+                data_csv << t << "," << run_mode << "," << forces.x << "," << forces.y << "," << forces.z << "," 
+                         << forces.x / (wheel_mass * G_mag) << "," << max_v_finder->GetValue() << "\n";
+                data_csv.flush(); // Ensure data is written immediately
             }
 
             DEMSim.DoDynamics(step_size);
@@ -298,6 +310,9 @@ int main() {
         std::cout << "----------------------------------------" << std::endl;
     }
 
+    // Close CSV file
+    data_csv.close();
+    
     std::cout << "WheelDP demo exiting..." << std::endl;
     return 0;
 }

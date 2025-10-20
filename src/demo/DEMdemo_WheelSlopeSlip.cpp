@@ -20,6 +20,7 @@
 #include <cmath>
 #include <cstdio>
 #include <filesystem>
+#include <fstream>
 #include <map>
 #include <random>
 
@@ -31,6 +32,10 @@ int main() {
     std::filesystem::path out_dir = std::filesystem::current_path();
     out_dir /= "DemoOuput_WheelSlopeSlip";
     std::filesystem::create_directory(out_dir);
+    
+    // Create CSV file for data logging
+    std::ofstream data_csv(out_dir / "wheel_slope_slip_data.csv");
+    data_csv << "timestep,slope_deg,time,x_position,velocity_x,slip,max_system_velocity\n";
 
     // `World'
     float G_mag = 9.81;
@@ -280,6 +285,8 @@ int main() {
                 float3 V = wheel_tracker->Vel();
                 // float Vup = V.x * std::cos(G_ang) + V.z * std::sin(G_ang);
                 float slip = 1.0 - V.x / (w_r * wheel_rad);
+                
+                // Print to console
                 std::cout << "Current slope: " << Slope_deg << std::endl;
                 std::cout << "Time: " << t << std::endl;
                 // std::cout << "Distance: " << dist_moved << std::endl;
@@ -287,6 +294,12 @@ int main() {
                 std::cout << "V: " << V.x << std::endl;
                 std::cout << "Slip: " << slip << std::endl;
                 std::cout << "Max system velocity: " << max_v_finder->GetValue() << std::endl;
+                
+                // Write to CSV file
+                data_csv << curr_step << "," << Slope_deg << "," << t << "," 
+                         << wheel_tracker->Pos().x << "," << V.x << "," << slip << "," 
+                         << max_v_finder->GetValue() << "\n";
+                data_csv.flush(); // Ensure data is written immediately
             }
 
             DEMSim.DoDynamics(step_size);
@@ -299,6 +312,9 @@ int main() {
         std::cout << "----------------------------------------" << std::endl;
     }
 
+    // Close CSV file
+    data_csv.close();
+    
     std::cout << "DEMdemo_WheelSlopeSlip demo exiting..." << std::endl;
     return 0;
 }

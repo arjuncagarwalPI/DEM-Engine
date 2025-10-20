@@ -20,6 +20,7 @@
 #include <cmath>
 #include <cstdio>
 #include <filesystem>
+#include <fstream>
 #include <map>
 #include <random>
 
@@ -31,6 +32,10 @@ int main() {
     std::filesystem::path out_dir = std::filesystem::current_path();
     out_dir /= "DemoOutput_WheelDPSimplified";
     std::filesystem::create_directory(out_dir);
+    
+    // Create CSV file for data logging
+    std::ofstream data_csv(out_dir / "wheel_drawbar_pull_simplified_data.csv");
+    data_csv << "time,force_x,force_y,force_z,drawbar_pull_coeff,max_system_velocity\n";
 
     DEMSolver DEMSim;
     DEMSim.SetVerbosity(INFO);
@@ -203,10 +208,17 @@ int main() {
         if (curr_step % report_steps == 0) {
             float3 forces = wheel_tracker->ContactAcc();
             forces *= wheel_mass;
+            
+            // Print to console
             std::cout << "Time: " << t << std::endl;
             std::cout << "Force on wheel: " << forces.x << ", " << forces.y << ", " << forces.z << std::endl;
             std::cout << "Drawbar pull coeff: " << forces.x / total_pressure << std::endl;
             std::cout << "Max system velocity: " << max_v_finder->GetValue() << std::endl;
+            
+            // Write to CSV file
+            data_csv << t << "," << forces.x << "," << forces.y << "," << forces.z << "," 
+                     << forces.x / total_pressure << "," << max_v_finder->GetValue() << "\n";
+            data_csv.flush(); // Ensure data is written immediately
         }
 
         DEMSim.DoDynamics(step_size);
@@ -221,6 +233,9 @@ int main() {
     DEMSim.ShowMemStats();
     std::cout << "----------------------------------------" << std::endl;
 
+    // Close CSV file
+    data_csv.close();
+    
     std::cout << "WheelDPSimpilified demo exiting..." << std::endl;
     return 0;
 }

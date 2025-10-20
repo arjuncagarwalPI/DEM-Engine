@@ -2,9 +2,10 @@ build*
 .vscode/
 *.vtk
 *.csv
+*.mp4
 *.egg-info/
 .cache/
 dist/
 output/*
 post/*
-
+log/

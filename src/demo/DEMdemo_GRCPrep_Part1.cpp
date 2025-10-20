@@ -105,6 +105,7 @@ int main() {
 
     // Make ready for simulation
     float step_size = 1e-6;
+    // float step_size = 1e-7;
     DEMSim.SetInitTimeStep(step_size);
     DEMSim.SetGravitationalAcceleration(make_float3(0, 0, -9.81));
     // Max velocity info is generally just for the solver's reference and the user do not have to set it. The solver

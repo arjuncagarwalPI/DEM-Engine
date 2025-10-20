@@ -18,6 +18,7 @@
 #include <cmath>
 #include <cstdio>
 #include <filesystem>
+#include <fstream>
 #include <map>
 #include <random>
 
@@ -146,6 +147,10 @@ int main() {
     std::filesystem::path out_dir = std::filesystem::current_path();
     out_dir /= "DemoOutput_ConePenetration";
     std::filesystem::create_directory(out_dir);
+    
+    // Create CSV file for data logging
+    std::ofstream data_csv(out_dir / "cone_penetration_data.csv");
+    data_csv << "time,tip_z_coord,penetration,force_x,force_y,force_z,pressure\n";
 
     // Settle
     DEMSim.DoDynamicsThenSync(0.8);
@@ -244,11 +249,18 @@ int main() {
             tip_z_when_first_hit = tip_z;
         }
         float penetration = (hit_terrain) ? tip_z_when_first_hit - tip_z : 0;
+        
+        // Print to console
         std::cout << "Time: " << t << std::endl;
         std::cout << "Z coord of tip: " << tip_z << std::endl;
         std::cout << "Penetration: " << penetration << std::endl;
         std::cout << "Force on cone: " << forces.x << ", " << forces.y << ", " << forces.z << std::endl;
         std::cout << "Pressure: " << pressure << std::endl;
+        
+        // Write to CSV file
+        data_csv << t << "," << tip_z << "," << penetration << "," 
+                 << forces.x << "," << forces.y << "," << forces.z << "," << pressure << "\n";
+        data_csv.flush(); // Ensure data is written immediately
 
         if (frame_count % 500 == 0) {
             char filename[100], meshname[100];
@@ -269,6 +281,9 @@ int main() {
     std::chrono::duration<double> time_sec = std::chrono::duration_cast<std::chrono::duration<double>>(end - start);
     std::cout << time_sec.count() << " seconds (wall time) to finish the simulation" << std::endl;
 
+    // Close CSV file
+    data_csv.close();
+    
     std::cout << "ConePenetration demo exiting..." << std::endl;
     return 0;
 }
